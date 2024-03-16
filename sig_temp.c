@@ -127,12 +127,12 @@ void control_servo(int position) {
 void *train_sensor_thread(void *arg) {
     while (1) {
         pthread_mutex_lock(&lock);
-        int new_train_approaching = read_gpio(BUTTON1_PIN);
-        int new_train_leaving = read_gpio(BUTTON2_PIN);
+        int new_train_approaching = !read_gpio(BUTTON1_PIN);  // Invert the logic
+        int new_train_leaving = !read_gpio(BUTTON2_PIN);      // Invert the logic
         if (new_train_approaching != train_approaching || new_train_leaving != train_leaving) {
             train_approaching = new_train_approaching;
             train_leaving = new_train_leaving;
-            collision_scenario = train_approaching && train_leaving;
+            collision_scenario = train_approaching && train_leaving;  // Collision when both buttons are pressed
         }
         pthread_mutex_unlock(&lock);
         usleep(100000); // 100 ms
