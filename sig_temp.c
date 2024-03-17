@@ -6,11 +6,13 @@
 #include <string.h>
 #include <sys/utsname.h>
 
-char LED1_PIN[5];
-char LED2_PIN[5];
-char BUTTON1_PIN[5];
-char BUTTON2_PIN[5];
-char BUZZER_PIN[5];
+#define LED1_PIN "45"
+#define LED2_PIN "44"
+#define BUTTON1_PIN "68"
+#define BUTTON2_PIN "67"
+#define BUTTON3_PIN "60"
+#define BUTTON4_PIN "69"
+#define BUZZER_PIN "66"
 #define PWM_EXPORT_PATH "/sys/class/pwm/pwmchip4/export"
 #define PWM_PERIOD_PATH "/sys/class/pwm/pwmchip4/pwm-4:0/period"
 #define PWM_DUTY_CYCLE_PATH "/sys/class/pwm/pwmchip4/pwm-4:0/duty_cycle"
@@ -29,31 +31,23 @@ void *servo_control_thread(void *arg);
 void *buzzer_control_thread(void *arg);
 
 // Global variables
-int train_approaching = 0;
-int train_leaving = 0;
+int train_approaching_left = 0;
+int train_leaving_left = 0;
+int train_approaching_right = 0;
+int train_leaving_right = 0;
 int collision_scenario = 0;
 pthread_mutex_t lock;
 
 int main() {
     pthread_t threads[4];
 
-    // Prompt user for GPIO pin numbers
-    printf("Enter GPIO pin number for LED1: ");
-    scanf("%s", LED1_PIN);
-    printf("Enter GPIO pin number for LED2: ");
-    scanf("%s", LED2_PIN);
-    printf("Enter GPIO pin number for Button1: ");
-    scanf("%s", BUTTON1_PIN);
-    printf("Enter GPIO pin number for Button2: ");
-    scanf("%s", BUTTON2_PIN);
-    printf("Enter GPIO pin number for Buzzer: ");
-    scanf("%s", BUZZER_PIN);
-
     // Initialize GPIO pins
     setup_gpio(LED1_PIN, "out");
     setup_gpio(LED2_PIN, "out");
     setup_gpio(BUTTON1_PIN, "in");
     setup_gpio(BUTTON2_PIN, "in");
+    setup_gpio(BUTTON3_PIN, "in");
+    setup_gpio(BUTTON4_PIN, "in");
     setup_gpio(BUZZER_PIN, "out");
 
     // Initialize PWM for servo
@@ -137,15 +131,57 @@ void control_servo(int position) {
 }
 
 void *train_sensor_thread(void *arg) {
+    int button1_pressed = 0;
+    int button2_pressed = 0;
+    int button3_pressed = 0;
+    int button4_pressed = 0;
+
     while (1) {
         pthread_mutex_lock(&lock);
-        int new_train_approaching = !read_gpio(BUTTON1_PIN);  // Invert the logic
-        int new_train_leaving = !read_gpio(BUTTON2_PIN);      // Invert the logic
-        if (new_train_approaching != train_approaching || new_train_leaving != train_leaving) {
-            train_approaching = new_train_approaching;
-            train_leaving = new_train_leaving;
-            collision_scenario = train_approaching && train_leaving;  // Collision when both buttons are pressed
+        if (!read_gpio(BUTTON1_PIN) && !button1_pressed) {  // Invert logic
+            button1_pressed = 1;
+            printf("Button 1 pressed\n");
         }
+        if (!read_gpio(BUTTON2_PIN) && button1_pressed && !button2_pressed) {  // Invert logic
+            button2_pressed = 1;
+            printf("Button 2 pressed\n");
+        }
+        if (!read_gpio(BUTTON3_PIN) && button4_pressed && !button3_pressed) {  // Invert logic
+            button3_pressed = 1;
+            printf("Button 3 pressed\n");
+        }
+        if (!read_gpio(BUTTON4_PIN) && !button4_pressed) {  // Invert logic
+            button4_pressed = 1;
+            printf("Button 4 pressed\n");
+        }
+
+        // Train coming from left and passing
+        if (button1_pressed && button2_pressed) {
+            train_approaching_left = 1;
+            train_leaving_left = 1;
+            printf("Train coming from left and passing\n");
+        }
+
+        // Train coming from right and passing
+        if (button4_pressed && button3_pressed) {
+            train_approaching_right = 1;
+            train_leaving_right = 1;
+            printf("Train coming from right and passing\n");
+        }
+
+        // Reset flags and button states when the train has passed
+        if ((train_leaving_left && train_leaving_right) || collision_scenario) {
+            train_approaching_left = 0;
+            train_leaving_left = 0;
+            train_approaching_right = 0;
+            train_leaving_right = 0;
+            button1_pressed = 0;
+            button2_pressed = 0;
+            button3_pressed = 0;
+            button4_pressed = 0;
+            printf("Train has passed, resetting flags\n");
+        }
+
         pthread_mutex_unlock(&lock);
         usleep(100000); // 100 ms
     }
@@ -159,20 +195,13 @@ void *led_control_thread(void *arg) {
         if (collision_scenario) {
             write_gpio(LED1_PIN, "1");
             write_gpio(LED2_PIN, "1");
-        } else if (train_approaching || train_leaving) {
+        } else if (train_approaching_left || train_leaving_left || train_approaching_right || train_leaving_right) {
             led_state = !led_state;
             write_gpio(LED1_PIN, led_state ? "1" : "0");
             write_gpio(LED2_PIN, led_state ? "0" : "1");
         } else {
-            if (led_state) {
-                // Ensure LEDs are turned off and stay off for 1 second
-                write_gpio(LED1_PIN, "0");
-                write_gpio(LED2_PIN, "0");
-                led_state = 0;
-                pthread_mutex_unlock(&lock);
-                usleep(1000000); // 1 second
-                continue;
-            }
+            write_gpio(LED1_PIN, "0");
+            write_gpio(LED2_PIN, "0");
         }
         pthread_mutex_unlock(&lock);
         usleep(500000); // 500 ms for blinking
@@ -181,20 +210,12 @@ void *led_control_thread(void *arg) {
 }
 
 void *servo_control_thread(void *arg) {
-    int guard_raised = 0;
     while (1) {
         pthread_mutex_lock(&lock);
-        if (collision_scenario || train_approaching || train_leaving) {
+        if (train_approaching_left || train_leaving_left || train_approaching_right || train_leaving_right || collision_scenario) {
             control_servo(0); // Lower the crossing guard
-            guard_raised = 0;
         } else {
-            if (!guard_raised) {
-                pthread_mutex_unlock(&lock);
-                usleep(1000000); // Wait 1 second before raising
-                pthread_mutex_lock(&lock);
-                control_servo(90); // Raise the crossing guard
-                guard_raised = 1;
-            }
+            control_servo(90); // Raise the crossing guard
         }
         pthread_mutex_unlock(&lock);
         usleep(100000); // 100 ms
@@ -206,9 +227,9 @@ void *buzzer_control_thread(void *arg) {
     while (1) {
         pthread_mutex_lock(&lock);
         if (collision_scenario) {
-            write_gpio(BUZZER_PIN, "1");
+            write_gpio(BUZZER_PIN, "1"); // Sound the buzzer
         } else {
-            write_gpio(BUZZER_PIN, "0");
+            write_gpio(BUZZER_PIN, "0"); // Turn off the buzzer
         }
         pthread_mutex_unlock(&lock);
         usleep(100000); // 100 ms
