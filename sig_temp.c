@@ -6,11 +6,11 @@
 #include <string.h>
 #include <sys/utsname.h>
 
-#define LED1_PIN "67"
-#define LED2_PIN "68"
-#define BUTTON1_PIN "60"
-#define BUTTON2_PIN "69"
-#define BUZZER_PIN "66"
+char LED1_PIN[5];
+char LED2_PIN[5];
+char BUTTON1_PIN[5];
+char BUTTON2_PIN[5];
+char BUZZER_PIN[5];
 #define PWM_EXPORT_PATH "/sys/class/pwm/pwmchip4/export"
 #define PWM_PERIOD_PATH "/sys/class/pwm/pwmchip4/pwm-4:0/period"
 #define PWM_DUTY_CYCLE_PATH "/sys/class/pwm/pwmchip4/pwm-4:0/duty_cycle"
@@ -36,6 +36,18 @@ pthread_mutex_t lock;
 
 int main() {
     pthread_t threads[4];
+
+    // Prompt user for GPIO pin numbers
+    printf("Enter GPIO pin number for LED1: ");
+    scanf("%s", LED1_PIN);
+    printf("Enter GPIO pin number for LED2: ");
+    scanf("%s", LED2_PIN);
+    printf("Enter GPIO pin number for Button1: ");
+    scanf("%s", BUTTON1_PIN);
+    printf("Enter GPIO pin number for Button2: ");
+    scanf("%s", BUTTON2_PIN);
+    printf("Enter GPIO pin number for Buzzer: ");
+    scanf("%s", BUZZER_PIN);
 
     // Initialize GPIO pins
     setup_gpio(LED1_PIN, "out");
@@ -151,25 +163,38 @@ void *led_control_thread(void *arg) {
             led_state = !led_state;
             write_gpio(LED1_PIN, led_state ? "1" : "0");
             write_gpio(LED2_PIN, led_state ? "0" : "1");
-            usleep(500000); // Blink every 500 ms
         } else {
-            write_gpio(LED1_PIN, "0");
-            write_gpio(LED2_PIN, "0");
+            if (led_state) {
+                // Ensure LEDs are turned off and stay off for 1 second
+                write_gpio(LED1_PIN, "0");
+                write_gpio(LED2_PIN, "0");
+                led_state = 0;
+                pthread_mutex_unlock(&lock);
+                usleep(1000000); // 1 second
+                continue;
+            }
         }
         pthread_mutex_unlock(&lock);
-        usleep(100000); // 100 ms
+        usleep(500000); // 500 ms for blinking
     }
     return NULL;
 }
 
 void *servo_control_thread(void *arg) {
+    int guard_raised = 0;
     while (1) {
         pthread_mutex_lock(&lock);
         if (collision_scenario || train_approaching || train_leaving) {
             control_servo(0); // Lower the crossing guard
+            guard_raised = 0;
         } else {
-            control_servo(90); // Raise the crossing guard
-            usleep(1000000); // Wait 1 second before raising
+            if (!guard_raised) {
+                pthread_mutex_unlock(&lock);
+                usleep(1000000); // Wait 1 second before raising
+                pthread_mutex_lock(&lock);
+                control_servo(90); // Raise the crossing guard
+                guard_raised = 1;
+            }
         }
         pthread_mutex_unlock(&lock);
         usleep(100000); // 100 ms
