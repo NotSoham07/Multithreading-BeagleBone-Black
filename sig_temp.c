@@ -135,51 +135,64 @@ void *train_sensor_thread(void *arg) {
     int button2_pressed = 0;
     int button3_pressed = 0;
     int button4_pressed = 0;
+    int train_from_left = 0;
+    int train_from_right = 0;
 
     while (1) {
         pthread_mutex_lock(&lock);
-        if (!read_gpio(BUTTON1_PIN) && !button1_pressed) {  // Invert logic
+        int button1 = !read_gpio(BUTTON1_PIN);
+        int button2 = !read_gpio(BUTTON2_PIN);
+        int button3 = !read_gpio(BUTTON3_PIN);
+        int button4 = !read_gpio(BUTTON4_PIN);
+
+        // Train coming from left (1 then 2)
+        if (button1 && !button1_pressed && !button2_pressed) {
             button1_pressed = 1;
             printf("Button 1 pressed\n");
-        }
-        if (!read_gpio(BUTTON2_PIN) && button1_pressed && !button2_pressed) {  // Invert logic
+        } else if (button2 && button1_pressed && !button2_pressed) {
             button2_pressed = 1;
             printf("Button 2 pressed\n");
+            train_from_left = 1;
+            printf("Train coming from left\n");
         }
-        if (!read_gpio(BUTTON3_PIN) && button4_pressed && !button3_pressed) {  // Invert logic
-            button3_pressed = 1;
-            printf("Button 3 pressed\n");
-        }
-        if (!read_gpio(BUTTON4_PIN) && !button4_pressed) {  // Invert logic
+
+        // Train coming from right (4 then 3)
+        if (button4 && !button4_pressed && !button3_pressed) {
             button4_pressed = 1;
             printf("Button 4 pressed\n");
+        } else if (button3 && button4_pressed && !button3_pressed) {
+            button3_pressed = 1;
+            printf("Button 3 pressed\n");
+            train_from_right = 1;
+            printf("Train coming from right\n");
         }
 
-        // Train coming from left and passing
-        if (button1_pressed && button2_pressed) {
-            train_approaching_left = 1;
-            train_leaving_left = 1;
-            printf("Train coming from left and passing\n");
+        // Train passing from left (3 then 4)
+        if (button3 && train_from_left && !button3_pressed && !button4_pressed) {
+            button3_pressed = 1;
+            printf("Button 3 pressed\n");
+        } else if (button4 && button3_pressed && !button4_pressed) {
+            button4_pressed = 1;
+            printf("Button 4 pressed\n");
+            printf("Train from left passed\n");
+            button1_pressed = button2_pressed = button3_pressed = button4_pressed = train_from_left = train_from_right = 0;
         }
 
-        // Train coming from right and passing
-        if (button4_pressed && button3_pressed) {
-            train_approaching_right = 1;
-            train_leaving_right = 1;
-            printf("Train coming from right and passing\n");
+        // Train passing from right (2 then 1)
+        if (button2 && train_from_right && !button2_pressed && !button1_pressed) {
+            button2_pressed = 1;
+            printf("Button 2 pressed\n");
+        } else if (button1 && button2_pressed && !button1_pressed) {
+            button1_pressed = 1;
+            printf("Button 1 pressed\n");
+            printf("Train from right passed\n");
+            button1_pressed = button2_pressed = button3_pressed = button4_pressed = train_from_left = train_from_right = 0;
         }
 
-        // Reset flags and button states when the train has passed
-        if ((train_leaving_left && train_leaving_right) || collision_scenario) {
-            train_approaching_left = 0;
-            train_leaving_left = 0;
-            train_approaching_right = 0;
-            train_leaving_right = 0;
-            button1_pressed = 0;
-            button2_pressed = 0;
-            button3_pressed = 0;
-            button4_pressed = 0;
-            printf("Train has passed, resetting flags\n");
+        // Collision scenario
+        if (train_from_left && train_from_right) {
+            printf("Collision detected!\n");
+            button1_pressed = button2_pressed = button3_pressed = button4_pressed = train_from_left = train_from_right = 0;
         }
 
         pthread_mutex_unlock(&lock);
