@@ -31,11 +31,10 @@ void *servo_control_thread(void *arg);
 void *buzzer_control_thread(void *arg);
 
 // Global variables
-int train_approaching_left = 0;
-int train_leaving_left = 0;
-int train_approaching_right = 0;
-int train_leaving_right = 0;
+int train_from_left = 0;
+int train_from_right = 0;
 int collision_scenario = 0;
+
 pthread_mutex_t lock;
 
 int main() {
@@ -135,8 +134,6 @@ void *train_sensor_thread(void *arg) {
     int button2_pressed = 0;
     int button3_pressed = 0;
     int button4_pressed = 0;
-    int train_from_left = 0;
-    int train_from_right = 0;
 
     while (1) {
         pthread_mutex_lock(&lock);
@@ -154,6 +151,8 @@ void *train_sensor_thread(void *arg) {
             printf("Button 2 pressed\n");
             train_from_left = 1;
             printf("Train coming from left\n");
+            write_gpio(LED1_PIN, "1"); // Turn on LED1
+            control_servo(0); // Lower the crossing guard
         }
 
         // Train coming from right (4 then 3)
@@ -165,6 +164,8 @@ void *train_sensor_thread(void *arg) {
             printf("Button 3 pressed\n");
             train_from_right = 1;
             printf("Train coming from right\n");
+            write_gpio(LED2_PIN, "1"); // Turn on LED2
+            control_servo(0); // Lower the crossing guard
         }
 
         // Train passing from left (3 then 4)
@@ -175,6 +176,8 @@ void *train_sensor_thread(void *arg) {
             button4_pressed = 1;
             printf("Button 4 pressed\n");
             printf("Train from left passed\n");
+            write_gpio(LED1_PIN, "0"); // Turn off LED1
+            control_servo(90); // Raise the crossing guard
             button1_pressed = button2_pressed = button3_pressed = button4_pressed = train_from_left = train_from_right = 0;
         }
 
@@ -186,12 +189,18 @@ void *train_sensor_thread(void *arg) {
             button1_pressed = 1;
             printf("Button 1 pressed\n");
             printf("Train from right passed\n");
+            write_gpio(LED2_PIN, "0"); // Turn off LED2
+            control_servo(90); // Raise the crossing guard
             button1_pressed = button2_pressed = button3_pressed = button4_pressed = train_from_left = train_from_right = 0;
         }
 
         // Collision scenario
         if (train_from_left && train_from_right) {
             printf("Collision detected!\n");
+            write_gpio(LED1_PIN, "1"); // Turn on LED1
+            write_gpio(LED2_PIN, "1"); // Turn on LED2
+            write_gpio(BUZZER_PIN, "1"); // Turn on buzzer
+            control_servo(0); // Lower the crossing guard
             button1_pressed = button2_pressed = button3_pressed = button4_pressed = train_from_left = train_from_right = 0;
         }
 
@@ -206,18 +215,27 @@ void *led_control_thread(void *arg) {
     while (1) {
         pthread_mutex_lock(&lock);
         if (collision_scenario) {
-            write_gpio(LED1_PIN, "1");
-            write_gpio(LED2_PIN, "1");
-        } else if (train_approaching_left || train_leaving_left || train_approaching_right || train_leaving_right) {
-            led_state = !led_state;
+            // Blink rapidly in the event of a collision
             write_gpio(LED1_PIN, led_state ? "1" : "0");
             write_gpio(LED2_PIN, led_state ? "0" : "1");
+            write_gpio(BUZZER_PIN, "1"); // Sound the buzzer
+            pthread_mutex_unlock(&lock);
+            usleep(250000); // Blink every 250 ms for rapid blinking
+        } else if (train_from_left || train_from_right) {
+            // Keep blinking until the train has passed
+            write_gpio(LED1_PIN, led_state ? "1" : "0");
+            write_gpio(LED2_PIN, led_state ? "0" : "1");
+            write_gpio(BUZZER_PIN, "0"); // Turn off the buzzer
+            pthread_mutex_unlock(&lock);
+            usleep(500000); // Blink every 500 ms
         } else {
             write_gpio(LED1_PIN, "0");
             write_gpio(LED2_PIN, "0");
+            write_gpio(BUZZER_PIN, "0"); // Turn off the buzzer
+            pthread_mutex_unlock(&lock);
+            usleep(100000); // Check the flag every 100 ms
         }
-        pthread_mutex_unlock(&lock);
-        usleep(500000); // 500 ms for blinking
+        led_state = !led_state;
     }
     return NULL;
 }
@@ -225,7 +243,7 @@ void *led_control_thread(void *arg) {
 void *servo_control_thread(void *arg) {
     while (1) {
         pthread_mutex_lock(&lock);
-        if (train_approaching_left || train_leaving_left || train_approaching_right || train_leaving_right || collision_scenario) {
+        if (train_from_left || train_from_right || collision_scenario) {
             control_servo(0); // Lower the crossing guard
         } else {
             control_servo(90); // Raise the crossing guard
