@@ -142,6 +142,15 @@ void *train_sensor_thread(void *arg) {
         int button3 = !read_gpio(BUTTON3_PIN);
         int button4 = !read_gpio(BUTTON4_PIN);
 
+        // Check for button presses after a collision has been detected
+        if (collision_scenario && (button1 || button2 || button3 || button4)) {
+            collision_scenario = 0;
+            write_gpio(LED1_PIN, "0");
+            write_gpio(LED2_PIN, "0");
+            write_gpio(BUZZER_PIN, "0");
+            control_servo(90); // Raise the crossing guard
+        }
+
         // Train coming from left (1 then 2)
         if (button1 && !button1_pressed && !button2_pressed) {
             button1_pressed = 1;
@@ -196,12 +205,12 @@ void *train_sensor_thread(void *arg) {
 
         // Collision scenario
         if (train_from_left && train_from_right) {
+            collision_scenario = 1;
             printf("Collision detected!\n");
             write_gpio(LED1_PIN, "1"); // Turn on LED1
             write_gpio(LED2_PIN, "1"); // Turn on LED2
             write_gpio(BUZZER_PIN, "1"); // Turn on buzzer
             control_servo(0); // Lower the crossing guard
-            button1_pressed = button2_pressed = button3_pressed = button4_pressed = train_from_left = train_from_right = 0;
         }
 
         pthread_mutex_unlock(&lock);
@@ -215,23 +224,21 @@ void *led_control_thread(void *arg) {
     while (1) {
         pthread_mutex_lock(&lock);
         if (collision_scenario) {
-            // Blink rapidly in the event of a collision
-            write_gpio(LED1_PIN, led_state ? "1" : "0");
-            write_gpio(LED2_PIN, led_state ? "0" : "1");
-            write_gpio(BUZZER_PIN, "1"); // Sound the buzzer
-            pthread_mutex_unlock(&lock);
-            usleep(250000); // Blink every 250 ms for rapid blinking
+            while (collision_scenario) {
+                write_gpio(LED1_PIN, led_state ? "1" : "0");
+                write_gpio(LED2_PIN, led_state ? "1" : "0");
+                led_state = !led_state;
+                usleep(250000); // Blink every 250 ms for rapid blinking
+            }
         } else if (train_from_left || train_from_right) {
             // Keep blinking until the train has passed
             write_gpio(LED1_PIN, led_state ? "1" : "0");
             write_gpio(LED2_PIN, led_state ? "0" : "1");
-            write_gpio(BUZZER_PIN, "0"); // Turn off the buzzer
             pthread_mutex_unlock(&lock);
             usleep(500000); // Blink every 500 ms
         } else {
             write_gpio(LED1_PIN, "0");
             write_gpio(LED2_PIN, "0");
-            write_gpio(BUZZER_PIN, "0"); // Turn off the buzzer
             pthread_mutex_unlock(&lock);
             usleep(100000); // Check the flag every 100 ms
         }
@@ -258,7 +265,10 @@ void *buzzer_control_thread(void *arg) {
     while (1) {
         pthread_mutex_lock(&lock);
         if (collision_scenario) {
-            write_gpio(BUZZER_PIN, "1"); // Sound the buzzer
+            while (collision_scenario) {
+                write_gpio(BUZZER_PIN, "1"); // Keep the buzzer on
+                usleep(100000); // Check every 100 ms
+            }
         } else {
             write_gpio(BUZZER_PIN, "0"); // Turn off the buzzer
         }
