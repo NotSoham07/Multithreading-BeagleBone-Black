@@ -1,2 +1,2 @@
-# Multitasking-BeagleBone-Black
+# Multithreading-BeagleBone-Black
  
