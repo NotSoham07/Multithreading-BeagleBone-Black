@@ -39,6 +39,27 @@ pthread_mutex_t lock;
 
 int main() {
     pthread_t threads[4];
+    char led1_pin[10], led2_pin[10], button1_pin[10], button2_pin[10], button3_pin[10], button4_pin[10], buzzer_pin[10], pwm_chip_num[10], pwm_channel_num[10];
+
+    // Prompt user for GPIO pin numbers
+    printf("Enter GPIO pin number for LED1: ");
+    scanf("%s", led1_pin);
+    printf("Enter GPIO pin number for LED2: ");
+    scanf("%s", led2_pin);
+    printf("Enter GPIO pin number for Button1: ");
+    scanf("%s", button1_pin);
+    printf("Enter GPIO pin number for Button2: ");
+    scanf("%s", button2_pin);
+    printf("Enter GPIO pin number for Button3: ");
+    scanf("%s", button3_pin);
+    printf("Enter GPIO pin number for Button4: ");
+    scanf("%s", button4_pin);
+    printf("Enter GPIO pin number for Buzzer: ");
+    scanf("%s", buzzer_pin);
+    printf("Enter PWM chip number: ");
+    scanf("%s", pwm_chip_num);
+    printf("Enter PWM channel number: ");
+    scanf("%s", pwm_channel_num);
 
     // Initialize GPIO pins
     setup_gpio(LED1_PIN, "out");
@@ -121,7 +142,7 @@ void setup_pwm() {
 
 void control_servo(int position) {
     // Calculate the duty cycle for the given position
-    int duty_cycle = 1000000 + (position * 5555); // 0 degrees at 1ms, 180 degrees at 2ms
+    int duty_cycle = 1500000 + (position * 5000); // 0 degrees at 1ms, 180 degrees at 2ms
 
     // Set the duty cycle
     char duty_cycle_str[20];
@@ -161,7 +182,7 @@ void *train_sensor_thread(void *arg) {
             train_from_left = 1;
             printf("Train coming from left\n");
             write_gpio(LED1_PIN, "1"); // Turn on LED1
-            control_servo(0); // Lower the crossing guard
+            control_servo(-90); // Lower the crossing guard
         }
 
         // Train coming from right (4 then 3)
@@ -174,7 +195,7 @@ void *train_sensor_thread(void *arg) {
             train_from_right = 1;
             printf("Train coming from right\n");
             write_gpio(LED2_PIN, "1"); // Turn on LED2
-            control_servo(0); // Lower the crossing guard
+            control_servo(-90); // Lower the crossing guard
         }
 
         // Train passing from left (3 then 4)
@@ -185,7 +206,18 @@ void *train_sensor_thread(void *arg) {
             button4_pressed = 1;
             printf("Button 4 pressed\n");
             printf("Train from left passed\n");
+            // Wait for 1 second before turning off the LED
+            pthread_mutex_unlock(&lock);
+            sleep(1);
+            pthread_mutex_lock(&lock);
+        
             write_gpio(LED1_PIN, "0"); // Turn off LED1
+            
+            // Wait for an additional 1 second before raising the crossing guard
+            pthread_mutex_unlock(&lock);
+            sleep(1);
+            pthread_mutex_lock(&lock);
+        
             control_servo(90); // Raise the crossing guard
             button1_pressed = button2_pressed = button3_pressed = button4_pressed = train_from_left = train_from_right = 0;
         }
@@ -198,7 +230,18 @@ void *train_sensor_thread(void *arg) {
             button1_pressed = 1;
             printf("Button 1 pressed\n");
             printf("Train from right passed\n");
+            // Wait for 1 second before turning off the LED
+            pthread_mutex_unlock(&lock);
+            sleep(1);
+            pthread_mutex_lock(&lock);
+        
             write_gpio(LED2_PIN, "0"); // Turn off LED2
+        
+            // Wait for an additional 1 second before raising the crossing guard
+            pthread_mutex_unlock(&lock);
+            sleep(1);
+            pthread_mutex_lock(&lock);
+        
             control_servo(90); // Raise the crossing guard
             button1_pressed = button2_pressed = button3_pressed = button4_pressed = train_from_left = train_from_right = 0;
         }
@@ -211,6 +254,14 @@ void *train_sensor_thread(void *arg) {
             write_gpio(LED2_PIN, "1"); // Turn on LED2
             write_gpio(BUZZER_PIN, "1"); // Turn on buzzer
             control_servo(0); // Lower the crossing guard
+            pthread_mutex_unlock(&lock);
+            sleep(2);
+            pthread_mutex_lock(&lock);
+            write_gpio(LED1_PIN, "0"); // Turn on LED1
+            write_gpio(LED2_PIN, "0"); // Turn on LED2
+            write_gpio(BUZZER_PIN, "0"); // Turn on buzzer
+            control_servo(90);
+            collision_scenario = 0;
         }
 
         pthread_mutex_unlock(&lock);
@@ -251,7 +302,7 @@ void *servo_control_thread(void *arg) {
     while (1) {
         pthread_mutex_lock(&lock);
         if (train_from_left || train_from_right || collision_scenario) {
-            control_servo(0); // Lower the crossing guard
+            control_servo(-90); // Lower the crossing guard
         } else {
             control_servo(90); // Raise the crossing guard
         }
