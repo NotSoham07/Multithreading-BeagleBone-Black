@@ -281,14 +281,14 @@ void *train_sensor_thread(void *arg) {
 
 // Function to control the LED
 void *led_control_thread(void *arg) {
-    int led_state = 0;
+    int led_state = 0; // Flag to keep track of the LED state
     while (1) {
         pthread_mutex_lock(&lock);
-        if (collision_scenario) {
+        if (collision_scenario) { // Rapidly blink the LEDs during a collision scenario
             while (collision_scenario) {
                 write_gpio(LED1_PIN, led_state ? "1" : "0");
                 write_gpio(LED2_PIN, led_state ? "1" : "0");
-                led_state = !led_state;
+                led_state = !led_state; // Toggle the LED state
                 usleep(250000); // Blink every 250 ms for rapid blinking
             }
         } else if (train_from_left || train_from_right) {
