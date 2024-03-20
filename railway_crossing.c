@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/utsname.h>
 
+// GPIO pin numbers
 #define LED1_PIN "45"
 #define LED2_PIN "44"
 #define BUTTON1_PIN "68"
@@ -13,6 +14,8 @@
 #define BUTTON3_PIN "60"
 #define BUTTON4_PIN "69"
 #define BUZZER_PIN "66"
+
+// PWM paths
 #define PWM_EXPORT_PATH "/sys/class/pwm/pwmchip4/export"
 #define PWM_PERIOD_PATH "/sys/class/pwm/pwmchip4/pwm-4:0/period"
 #define PWM_DUTY_CYCLE_PATH "/sys/class/pwm/pwmchip4/pwm-4:0/duty_cycle"
@@ -39,7 +42,8 @@ pthread_mutex_t lock;
 
 int main() {
     pthread_t threads[4];
-    char led1_pin[10], led2_pin[10], button1_pin[10], button2_pin[10], button3_pin[10], button4_pin[10], buzzer_pin[10], pwm_chip_num[10], pwm_channel_num[10];
+    // User input variables
+    char led1_pin[10], led2_pin[10], button1_pin[10], button2_pin[10], button3_pin[10], button4_pin[10], buzzer_pin[10], pwm_chip_num[10], pwm_channel_num[10]; 
 
     // Prompt user for GPIO pin numbers
     printf("Enter GPIO pin number for LED1: ");
@@ -93,24 +97,26 @@ int main() {
     return 0;
 }
 
+// Function to setup a GPIO pin
 void setup_gpio(const char *pin, const char *direction) {
-    char path[50];
-    snprintf(path, sizeof(path), "/sys/class/gpio/gpio%s", pin);
+    char path[50]; // Path to the GPIO pin
+    snprintf(path, sizeof(path), "/sys/class/gpio/gpio%s", pin); // Check if the pin is already exported
 
     // Export the pin if not already exported
     if (access(path, F_OK) == -1) {
-        int export_fd = open("/sys/class/gpio/export", O_WRONLY);
+        int export_fd = open("/sys/class/gpio/export", O_WRONLY); // Open the export file
         write(export_fd, pin, strlen(pin));
         close(export_fd);
     }
 
     // Set the pin direction
     snprintf(path, sizeof(path), "/sys/class/gpio/gpio%s/direction", pin);
-    int direction_fd = open(path, O_WRONLY);
+    int direction_fd = open(path, O_WRONLY); // Open the direction file
     write(direction_fd, direction, strlen(direction));
-    close(direction_fd);
+    close(direction_fd); // Close the file
 }
 
+// Function to write a value to a GPIO pin
 void write_gpio(const char *pin, const char *value) {
     char path[50];
     snprintf(path, sizeof(path), "/sys/class/gpio/gpio%s/value", pin);
@@ -119,6 +125,7 @@ void write_gpio(const char *pin, const char *value) {
     close(value_fd);
 }
 
+// Function to read a value from a GPIO pin
 int read_gpio(const char *pin) {
     char path[50];
     char value[3];
@@ -129,6 +136,7 @@ int read_gpio(const char *pin) {
     return atoi(value);
 }
 
+// Function to setup the PWM for the servo
 void setup_pwm() {
     // Export the PWM channel
     write_to_file(PWM_EXPORT_PATH, "0");
@@ -140,6 +148,7 @@ void setup_pwm() {
     write_to_file(PWM_ENABLE_PATH, "1");
 }
 
+// Function to control the servo motor
 void control_servo(int position) {
     // Calculate the duty cycle for the given position
     int duty_cycle = 1500000 + (position * 5000); // 0 degrees at 1ms, 180 degrees at 2ms
@@ -150,18 +159,19 @@ void control_servo(int position) {
     write_to_file(PWM_DUTY_CYCLE_PATH, duty_cycle_str);
 }
 
+// Function to control the train sensor
 void *train_sensor_thread(void *arg) {
-    int button1_pressed = 0;
-    int button2_pressed = 0;
-    int button3_pressed = 0;
-    int button4_pressed = 0;
+    int button1_pressed = 0; // Flag to check if button 1 is pressed
+    int button2_pressed = 0; // Flag to check if button 2 is pressed
+    int button3_pressed = 0; // Flag to check if button 3 is pressed
+    int button4_pressed = 0; // Flag to check if button 4 is pressed
 
     while (1) {
         pthread_mutex_lock(&lock);
-        int button1 = !read_gpio(BUTTON1_PIN);
-        int button2 = !read_gpio(BUTTON2_PIN);
-        int button3 = !read_gpio(BUTTON3_PIN);
-        int button4 = !read_gpio(BUTTON4_PIN);
+        int button1 = !read_gpio(BUTTON1_PIN); // Read the state of button 1
+        int button2 = !read_gpio(BUTTON2_PIN); // Read the state of button 2
+        int button3 = !read_gpio(BUTTON3_PIN); // Read the state of button 3
+        int button4 = !read_gpio(BUTTON4_PIN); // Read the state of button 4
 
         // Check for button presses after a collision has been detected
         if (collision_scenario && (button1 || button2 || button3 || button4)) {
@@ -270,6 +280,7 @@ void *train_sensor_thread(void *arg) {
     return NULL;
 }
 
+// Function to control the LED
 void *led_control_thread(void *arg) {
     int led_state = 0;
     while (1) {
@@ -298,6 +309,7 @@ void *led_control_thread(void *arg) {
     return NULL;
 }
 
+// Function to control the servo
 void *servo_control_thread(void *arg) {
     while (1) {
         pthread_mutex_lock(&lock);
@@ -312,6 +324,7 @@ void *servo_control_thread(void *arg) {
     return NULL;
 }
 
+// Function to control the buzzer
 void *buzzer_control_thread(void *arg) {
     while (1) {
         pthread_mutex_lock(&lock);
@@ -341,5 +354,5 @@ void write_to_file(const char *file_path, const char *value) {
         close(fd);
         exit(EXIT_FAILURE);
     }
-    close(fd);
+    close(fd); // Close the file
 }
