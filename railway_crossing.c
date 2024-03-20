@@ -34,16 +34,15 @@ void *servo_control_thread(void *arg);
 void *buzzer_control_thread(void *arg);
 
 // Global variables
-int train_from_left = 0;
-int train_from_right = 0;
-int collision_scenario = 0;
+int train_from_left = 0; // Flag to check if a train is coming from the left
+int train_from_right = 0; // Flag to check if a train is coming from the right
+int collision_scenario = 0; // Flag to check if a collision scenario has been detected
 
-pthread_mutex_t lock;
+pthread_mutex_t lock; // Mutex to protect shared resources
 
 int main() {
-    pthread_t threads[4];
-    // User input variables
-    char led1_pin[10], led2_pin[10], button1_pin[10], button2_pin[10], button3_pin[10], button4_pin[10], buzzer_pin[10], pwm_chip_num[10], pwm_channel_num[10]; 
+    pthread_t threads[4]; // Array of threads, 4 because we have 4
+    char led1_pin[10], led2_pin[10], button1_pin[10], button2_pin[10], button3_pin[10], button4_pin[10], buzzer_pin[10], pwm_chip_num[10], pwm_channel_num[10]; // User input variables
 
     // Prompt user for GPIO pin numbers
     printf("Enter GPIO pin number for LED1: ");
@@ -81,10 +80,10 @@ int main() {
     pthread_mutex_init(&lock, NULL);
 
     // Create threads
-    pthread_create(&threads[0], NULL, train_sensor_thread, NULL);
-    pthread_create(&threads[1], NULL, led_control_thread, NULL);
-    pthread_create(&threads[2], NULL, servo_control_thread, NULL);
-    pthread_create(&threads[3], NULL, buzzer_control_thread, NULL);
+    pthread_create(&threads[0], NULL, train_sensor_thread, NULL); // Create the train sensor thread
+    pthread_create(&threads[1], NULL, led_control_thread, NULL); // Create the LED thread
+    pthread_create(&threads[2], NULL, servo_control_thread, NULL); // Create the servo thread
+    pthread_create(&threads[3], NULL, buzzer_control_thread, NULL); // Create the buzzer thread
 
     // Join threads
     for (int i = 0; i < 4; i++) {
@@ -119,21 +118,21 @@ void setup_gpio(const char *pin, const char *direction) {
 // Function to write a value to a GPIO pin
 void write_gpio(const char *pin, const char *value) {
     char path[50];
-    snprintf(path, sizeof(path), "/sys/class/gpio/gpio%s/value", pin);
-    int value_fd = open(path, O_WRONLY);
-    write(value_fd, value, strlen(value));
+    snprintf(path, sizeof(path), "/sys/class/gpio/gpio%s/value", pin); // Path to the GPIO pin
+    int value_fd = open(path, O_WRONLY); // Open the value file
+    write(value_fd, value, strlen(value)); // Write the value to the file
     close(value_fd);
 }
 
 // Function to read a value from a GPIO pin
 int read_gpio(const char *pin) {
-    char path[50];
-    char value[3];
-    snprintf(path, sizeof(path), "/sys/class/gpio/gpio%s/value", pin);
-    int value_fd = open(path, O_RDONLY);
-    read(value_fd, value, 3);
-    close(value_fd);
-    return atoi(value);
+    char path[50]; // Path to the GPIO pin
+    char value[3]; // Buffer to store the value
+    snprintf(path, sizeof(path), "/sys/class/gpio/gpio%s/value", pin); // Path to the GPIO pin
+    int value_fd = open(path, O_RDONLY); // Open the value file
+    read(value_fd, value, 3); // Read the value from the file
+    close(value_fd); // Close the file
+    return atoi(value); // Convert the value to an integer and return
 }
 
 // Function to setup the PWM for the servo
@@ -154,9 +153,9 @@ void control_servo(int position) {
     int duty_cycle = 1500000 + (position * 5000); // 0 degrees at 1ms, 180 degrees at 2ms
 
     // Set the duty cycle
-    char duty_cycle_str[20];
-    sprintf(duty_cycle_str, "%d", duty_cycle);
-    write_to_file(PWM_DUTY_CYCLE_PATH, duty_cycle_str);
+    char duty_cycle_str[20]; // Buffer to store the duty cycle
+    sprintf(duty_cycle_str, "%d", duty_cycle); // Convert the duty cycle to a string
+    write_to_file(PWM_DUTY_CYCLE_PATH, duty_cycle_str); // Write the duty cycle to the file
 }
 
 // Function to control the train sensor
@@ -175,7 +174,7 @@ void *train_sensor_thread(void *arg) {
 
         // Check for button presses after a collision has been detected
         if (collision_scenario && (button1 || button2 || button3 || button4)) {
-            collision_scenario = 0;
+            collision_scenario = 0; // Reset the collision scenario
             write_gpio(LED1_PIN, "0");
             write_gpio(LED2_PIN, "0");
             write_gpio(BUZZER_PIN, "0");
@@ -328,7 +327,7 @@ void *servo_control_thread(void *arg) {
 void *buzzer_control_thread(void *arg) {
     while (1) {
         pthread_mutex_lock(&lock);
-        if (collision_scenario) {
+        if (collision_scenario) { // Keep the buzzer on during a collision scenario
             while (collision_scenario) {
                 write_gpio(BUZZER_PIN, "1"); // Keep the buzzer on
                 usleep(100000); // Check every 100 ms
@@ -345,11 +344,11 @@ void *buzzer_control_thread(void *arg) {
 // Function to write a value to a specified file
 void write_to_file(const char *file_path, const char *value) {
     int fd = open(file_path, O_WRONLY);
-    if (fd < 0) {
+    if (fd < 0) { // Check if the file was opened successfully
         perror("Failed to open file");
         exit(EXIT_FAILURE);
     }
-    if (write(fd, value, strlen(value)) < 0) {
+    if (write(fd, value, strlen(value)) < 0) { // Write the value to the file
         perror("Failed to write to file");
         close(fd);
         exit(EXIT_FAILURE);
