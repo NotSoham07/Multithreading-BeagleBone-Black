@@ -117,7 +117,7 @@ void setup_gpio(const char *pin, const char *direction) {
 
 // Function to write a value to a GPIO pin
 void write_gpio(const char *pin, const char *value) {
-    char path[50];
+    char path[50]; // Path to the GPIO pin
     snprintf(path, sizeof(path), "/sys/class/gpio/gpio%s/value", pin); // Path to the GPIO pin
     int value_fd = open(path, O_WRONLY); // Open the value file
     write(value_fd, value, strlen(value)); // Write the value to the file
@@ -343,7 +343,7 @@ void *buzzer_control_thread(void *arg) {
 
 // Function to write a value to a specified file
 void write_to_file(const char *file_path, const char *value) {
-    int fd = open(file_path, O_WRONLY);
+    int fd = open(file_path, O_WRONLY); // Open the file
     if (fd < 0) { // Check if the file was opened successfully
         perror("Failed to open file");
         exit(EXIT_FAILURE);
