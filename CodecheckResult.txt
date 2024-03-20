@@ -1,67 +1,38 @@
 Results	Entity	Line	Column	CheckID	Check Name	Ignored	Note	Severity
-Number of Results: 63								
+Number of Results: 34								
   /Users/praneeth/Desktop/code/railway_crossing.c								
-    Max Length(200) Exceeded: {'CountLine': 345} lines.	railway_crossing.c	0	0	RECOMMENDED_02	Files too long			
-    Fixed Value(4) used incorrectly	threads	41	22	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(10) used incorrectly	led1_pin	42	18	RECOMMENDED_08	Magic Numbers			
-    No comment with variable declaration	train_from_right	35	4	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	collision_scenario	36	4	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	lock	38	16	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	threads	41	14	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	led1_pin	42	9	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	led2_pin	42	23	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	button1_pin	42	37	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	button2_pin	42	54	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	button3_pin	42	71	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	button4_pin	42	88	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	buzzer_pin	42	105	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	pwm_chip_num	42	121	RECOMMENDED_16	Variables should be commented			
-    Fixed Value(2) used incorrectly	threads	82	28	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(3) used incorrectly	threads	83	28	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(4) used incorrectly	i	86	24	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(50) used incorrectly	path	97	14	RECOMMENDED_08	Magic Numbers			
-    No comment with variable declaration	path	97	9	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	export_fd	102	12	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	direction_fd	109	8	RECOMMENDED_16	Variables should be commented			
-    Fixed Value(50) used incorrectly	path	115	14	RECOMMENDED_08	Magic Numbers			
-    No comment with variable declaration	path	115	9	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	value_fd	117	8	RECOMMENDED_16	Variables should be commented			
-    Fixed Value(50) used incorrectly	path	123	14	RECOMMENDED_08	Magic Numbers			
-    No comment with variable declaration	path	123	9	RECOMMENDED_16	Variables should be commented			
-    Fixed Value(3) used incorrectly	value	124	15	RECOMMENDED_08	Magic Numbers			
-    No comment with variable declaration	value	124	9	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	value_fd	126	8	RECOMMENDED_16	Variables should be commented			
-    Fixed Value(3) used incorrectly	value	127	26	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(1500000) used incorrectly	duty_cycle	145	21	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(20) used incorrectly	duty_cycle_str	148	24	RECOMMENDED_08	Magic Numbers			
-    No comment with variable declaration	button1_pressed	154	8	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	button2_pressed	155	8	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	button3_pressed	156	8	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	button4_pressed	157	8	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	button1	161	12	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	button2	162	12	RECOMMENDED_16	Variables should be commented			
-    No comment with variable declaration	button3	163	12	RECOMMENDED_16	Variables should be commented			
-    Fixed Value(90) used incorrectly	control_servo	172	26	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(90) used incorrectly	control_servo	185	27	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(90) used incorrectly	control_servo	198	27	RECOMMENDED_08	Magic Numbers			
-    Duplicate code found in file: /Users/praneeth/Desktop/code/railway_crossing.c line: 241	railway_crossing.c	217	0	RECOMMENDED_20	Duplicate Code			
-    Fixed Value(90) used incorrectly	control_servo	221	26	RECOMMENDED_08	Magic Numbers			
-    Duplicate code found in file: /Users/praneeth/Desktop/code/railway_crossing.c line: 217	railway_crossing.c	241	0	RECOMMENDED_20	Duplicate Code			
-    Fixed Value(90) used incorrectly	control_servo	245	26	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(2) used incorrectly	sleep	258	18	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(90) used incorrectly	control_servo	263	26	RECOMMENDED_08	Magic Numbers			
-    Duplicate code found in file: /Users/praneeth/Desktop/code/railway_crossing.c line: 326	railway_crossing.c	267	0	RECOMMENDED_20	Duplicate Code			
-    Fixed Value(100000) used incorrectly	usleep	268	15	RECOMMENDED_08	Magic Numbers			
-    No comment with variable declaration	led_state	274	8	RECOMMENDED_16	Variables should be commented			
-    Fixed Value(250000) used incorrectly	usleep	282	23	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(500000) used incorrectly	usleep	289	19	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(100000) used incorrectly	usleep	294	19	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(90) used incorrectly	control_servo	305	27	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(90) used incorrectly	control_servo	307	26	RECOMMENDED_08	Magic Numbers			
-    Duplicate code found in file: /Users/praneeth/Desktop/code/railway_crossing.c line: 267	railway_crossing.c	309	0	RECOMMENDED_20	Duplicate Code			
-    Fixed Value(100000) used incorrectly	usleep	310	15	RECOMMENDED_08	Magic Numbers			
-    Fixed Value(100000) used incorrectly	usleep	321	23	RECOMMENDED_08	Magic Numbers			
-    Duplicate code found in file: /Users/praneeth/Desktop/code/railway_crossing.c line: 309	railway_crossing.c	326	0	RECOMMENDED_20	Duplicate Code			
-    Fixed Value(100000) used incorrectly	usleep	327	15	RECOMMENDED_08	Magic Numbers			
-    No comment with variable declaration	fd	334	8	RECOMMENDED_16	Variables should be commented			
+    Max Length(200) Exceeded: {'CountLine': 357} lines.	railway_crossing.c	0	0	RECOMMENDED_02	Files too long			
+    Fixed Value(4) used incorrectly	threads	44	22	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(10) used incorrectly	led1_pin	45	18	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(2) used incorrectly	threads	85	28	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(3) used incorrectly	threads	86	28	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(4) used incorrectly	i	89	24	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(50) used incorrectly	path	101	14	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(50) used incorrectly	path	120	14	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(50) used incorrectly	path	129	14	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(3) used incorrectly	value	130	15	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(3) used incorrectly	value	133	26	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(1500000) used incorrectly	duty_cycle	153	21	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(20) used incorrectly	duty_cycle_str	156	24	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(90) used incorrectly	control_servo	181	26	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(90) used incorrectly	control_servo	194	27	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(90) used incorrectly	control_servo	207	27	RECOMMENDED_08	Magic Numbers			
+    Duplicate code found in file: /Users/praneeth/Desktop/code/railway_crossing.c line: 250	railway_crossing.c	226	0	RECOMMENDED_20	Duplicate Code			
+    Fixed Value(90) used incorrectly	control_servo	230	26	RECOMMENDED_08	Magic Numbers			
+    Duplicate code found in file: /Users/praneeth/Desktop/code/railway_crossing.c line: 226	railway_crossing.c	250	0	RECOMMENDED_20	Duplicate Code			
+    Fixed Value(90) used incorrectly	control_servo	254	26	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(2) used incorrectly	sleep	267	18	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(90) used incorrectly	control_servo	272	26	RECOMMENDED_08	Magic Numbers			
+    Duplicate code found in file: /Users/praneeth/Desktop/code/railway_crossing.c line: 338	railway_crossing.c	276	0	RECOMMENDED_20	Duplicate Code			
+    Fixed Value(100000) used incorrectly	usleep	277	15	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(250000) used incorrectly	usleep	292	23	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(500000) used incorrectly	usleep	299	19	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(100000) used incorrectly	usleep	304	19	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(90) used incorrectly	control_servo	316	27	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(90) used incorrectly	control_servo	318	26	RECOMMENDED_08	Magic Numbers			
+    Duplicate code found in file: /Users/praneeth/Desktop/code/railway_crossing.c line: 276	railway_crossing.c	320	0	RECOMMENDED_20	Duplicate Code			
+    Fixed Value(100000) used incorrectly	usleep	321	15	RECOMMENDED_08	Magic Numbers			
+    Fixed Value(100000) used incorrectly	usleep	333	23	RECOMMENDED_08	Magic Numbers			
+    Duplicate code found in file: /Users/praneeth/Desktop/code/railway_crossing.c line: 320	railway_crossing.c	338	0	RECOMMENDED_20	Duplicate Code			
+    Fixed Value(100000) used incorrectly	usleep	339	15	RECOMMENDED_08	Magic Numbers			
 
